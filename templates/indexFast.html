@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <title>AI Companion</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: rgb(13, 15, 19);
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background-color: rgb(20, 22, 27);
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        header h1 {
+            color: white;
+            font-size: 20px;
+            font-weight: normal;
+        }
+
+        /* Chat messages area */
+        #responds {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            color: white;
+        }
+
+        #responds p {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        #responds p[style*="right"] {
+            background-color: #1e3a5f;
+            margin-left: auto;
+        }
+
+        #responds p[style*="left"] {
+            background-color: #2a2d32;
+            margin-right: auto;
+        }
+
+        /* Input form */
+        #chatForm {
+            padding: 20px;
+            background-color: rgb(20, 22, 27);
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #333;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            background-color: rgb(30, 33, 39);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1e3a5f;
+        }
+
+        input[type="text"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #1e3a5f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #2a4d7a;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #swap-btn {
+            background-color: #5f3a1e;
+        }
+
+        #swap-btn:hover:not(:disabled) {
+            background-color: #7a4d2a;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>AI Chat</h1>
+    </header>
+
+    <!-- Chat messages -->
+    <div id="responds">
+        {% for message in history %}
+        {% if message[0] != 'system' %}
+        <p style="text-align: {{ 'right' if message[0]=='human' else 'left' }}">
+            {{ message[1] + ' :tu' if message[0]=='human' else 'AI: ' + message[1] }}
+        </p>
+        {% endif %}
+        {% endfor %}
+    </div>
+    
+    <!-- Input form -->
+    <form id="chatForm" onsubmit="sendMessage(); return false;">
+        <input type="text" name="chat" id="textChat" placeholder="Scrivi la tua domanda..." autocomplete="off">
+        <button type="button" id="swap-btn" onclick="swapFunction()">Swap</button>
+        <button type="submit" id="send-btn">Invia</button>
+    </form>
+
+    <script>
+        // Scroll to bottom helper
+        function scrollToBottom() {
+            const respondsDiv = document.getElementById("responds");
+            respondsDiv.scrollTop = respondsDiv.scrollHeight;
+        }
+        scrollToBottom();
+
+        // Swap function - placeholder 
+        function swapFunction() {
+            console.log('Swap button clicked - implement logic here');
+            
+        }
+
+        // Send message function (text only, fast mode)
+        async function sendMessage() {
+            const form = document.getElementById("chatForm");
+            const input = document.getElementById("textChat");
+            const sendBtn = document.getElementById("send-btn");
+            const swapBtn = document.getElementById("swap-btn");
+            const respondsDiv = document.getElementById("responds");
+            const message = input.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            // Disable inputs
+            input.disabled = true;
+            sendBtn.disabled = true;
+            swapBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="spinner"></span>...';
+
+            // Display user message
+            const userMsg = document.createElement('p');
+            userMsg.textContent = `${message} :tu`;
+            userMsg.style.textAlign = 'right';
+            respondsDiv.appendChild(userMsg);
+            scrollToBottom();
+
+            input.value = "";
+
+            try {
+                const response = await fetch('/send_message', {
+                    method: "POST",
+                    body: JSON.stringify({ question: message }),
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Errore nella risposta del server');
+                }
+
+                const data = await response.json();
+
+                // Display AI response
+                const aiMsg = document.createElement('p');
+                aiMsg.textContent = `AI: ${data.answer}`;
+                aiMsg.style.textAlign = 'left';
+                respondsDiv.appendChild(aiMsg);
+                scrollToBottom();
+
+            } catch (e) {
+                console.error('Errore:', e);
+                const errorMsg = document.createElement('p');
+                errorMsg.textContent = 'AI: Errore di comunicazione con il server.';
+                errorMsg.style.textAlign = 'left';
+                errorMsg.style.backgroundColor = '#5f1e1e';
+                respondsDiv.appendChild(errorMsg);
+                scrollToBottom();
+            }
+
+            // Re-enable inputs
+            input.disabled = false;
+            sendBtn.disabled = false;
+            swapBtn.disabled = false;
+            sendBtn.textContent = 'Invia';
+            input.focus();
+        }
+    </script>
+</body>
+</html>

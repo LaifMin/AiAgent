@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environments
+venv/
+venv13/
+env/
+ENV/
+Include/
+Lib/
+Scripts/
+share/
+pyvenv.cfg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Flask
+instance/
+.webassets-cache
+
+# Audio files
+audio/
+generated_audio/
+*.wav
+*.mp3
+*.ogg
+
+# Models
+models/
+kokoro/
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.pth
+
+# Vector Store / RAG
+vs/
+*.faiss
+*.pkl
+*.pickle
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Git
+.git/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Config (if contains sensitive info - uncomment if needed)
+# config.yml
+
+# Test files
+test_*.py
